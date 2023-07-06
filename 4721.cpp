@@ -80,57 +80,46 @@ inline void NTT(ll a[], int lim, int opt)
     }
 }
 
-void cdq(int l, int r, int logn)
+void cdq(int l, int r)
 {
-    if(logn <= 0) return;
+    if(l == r) return;
     if(l >= n) return;
     int mid = l + r >> 1;
-    
-    cdq(l, mid, logn - 1);
+    cdq(l, mid);
 
-    lim = 1 << logn, len = logn;
-
-    memset(a + (r - l) / 2, 0, sizeof(ll) * (r - l) / 2);
-    memcpy(a, f + l, sizeof(ll) * (r - l) / 2);
-    memcpy(b, g, (r - l) * sizeof(ll));
-    // for(int i = 0; i < lim; i ++ ) b[i] = g[i];
-    // for(int i = 0; i < lim / 2; i ++ ) a[i] = f[i + l];
-    // for(int i = lim / 2; i < lim; i ++ ) a[i] = 0;
-
-    // while(lim < (r - l)) lim <<= 1, len ++;
+    int lim = r - l + 1, len = log2(lim);
     calc_rev(lim, len);
+    for(int i = l; i <= mid; i ++ ) a[i - l] = f[i];
+    for(int i = mid + 1; i <= r; i ++ ) a[i - l] = 0;
+    for(int i = 0; i <= r - l + 1; i ++ ) b[i] = g[i];
+
     NTT(a, lim, 1), NTT(b, lim, 1);
     for(int i = 0; i < lim; i ++ ) a[i] = a[i] * b[i] % mod;
     NTT(a, lim, -1);
-/*  */
-    for(int i = lim / 2; i < lim; i ++ )
-        f[l + i] = (f[l + i] + a[i]) % mod;
+
+    for(int i = mid + 1; i <= r; i ++ )
+        f[i] = (f[i] + a[i - l]) % mod;
     
-    // printf("[%d, %d]: ", l, r);
-    // for(int i = 0; i < n; i ++ ) printf("%lld ", f[i]);
-    // puts("");
-    
-    cdq(mid, r, logn - 1);
+    cdq(mid + 1, r);
 }
 
 int main()
 {
     #ifdef LOCAL
-        freopen("in.in", "r", stdin);
-        freopen("out.out", "w", stdout);
+        freopen("D:\\workspace\\in_and_out\\in.in", "r", stdin);
+        freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
     #endif
 
     n = read();
     for(int i = 1; i < n; i ++ ) g[i] = read();
 
+    f[0] = 1;
     int lg2 = 0;
     while((1 << lg2) < n) lg2 ++;
 
-    f[0] = 1;
-    cdq(0, 1 << lg2, lg2);
+    cdq(0, (1 << lg2) - 1); 
 
-    for(int i = 0; i < n; i ++ ) 
-        printf("%lld ", (f[i] % mod + mod) % mod);
+    for(int i = 0; i < n; i ++ ) printf("%lld ", f[i]);
 
     return 0;
 }

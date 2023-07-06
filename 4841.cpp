@@ -24,7 +24,8 @@ inline ll read()
 }
 
 const int N = 1e6 + 10, mod = 1004535809, G = 3;
-ll f[N], g[N], a[N], b[N];
+ll a[N], b[N];
+ll c[N], h[N];
 int rev[N];
 ll fact[N], invfact[N];
 int lim, len;
@@ -54,6 +55,12 @@ inline ll C(int n, int m)
 {
     if(n < 0 || m < 0 || n < m) return 0;
     return fact[n] * invfact[m] % mod * invfact[n - m] % mod;
+}
+
+inline ll g(int x)
+{
+    if(!x) return 1;
+    return qmi(2, (ll)x * (x - 1) / 2, mod);
 }
 
 inline void calcrev() 
@@ -93,58 +100,55 @@ inline void NTT(ll a[], int opt)
     }
 }
 
-void cdq(int l, int r, int log2)
+void cdq(int l, int r)
 {
-    if(log2 <= 0)
+    if(l > n) return;
+    if(l == r)
     {
-        f[l] = (f[l] + qmi(2, l * (l - 1) / 2, mod)) % mod;
+        if(l) h[l] = (h[l] + g(l) * invfact[l - 1] % mod) % mod;
         return;
     }
-    if(l >= n) return; 
-    
     int mid = l + r >> 1;
+    cdq(l, mid);
 
-    cdq(l, mid, log2 - 1);
-
-    lim = 1 << log2, len = log2;
-    memset(a + (r - l) / 2, 0, sizeof(ll) * (r - l) / 2);
-    memcpy(a, f + l, sizeof(ll) * (r - l) / 2);
-    memcpy(b, g, sizeof(ll) * (r - l));
-
+    lim = r - l + 1, len = log2(lim);
     calcrev();
+    for(int i = l; i <= mid; i ++ ) a[i - l] = h[i];
+    for(int i = mid + 1; i <= r; i ++ ) a[i - l] = 0;
+    for(int i = 0; i <= (r - l + 1); i ++ ) b[i] = c[i];
+
     NTT(a, 1), NTT(b, 1);
     for(int i = 0; i < lim; i ++ ) a[i] = a[i] * b[i] % mod;
     NTT(a, -1);
 
-    for(int i = lim / 2; i < lim; i ++ )
-        f[i + l] = (f[i + l] - a[i] + mod) % mod;
+    for(int i = mid + 1; i <= r; i ++ )
+        h[i] = (h[i] - a[i - l] + mod) % mod;
     
-    cdq(mid, r, log2 - 1);
+    cdq(mid + 1, r);
 }
 
 int main()
 {
     #ifdef LOCAL
-        freopen("in.in", "r", stdin);
-        freopen("out.out", "w", stdout);
+        freopen("D:\\workspace\\in_and_out\\in.in", "r", stdin);
+        freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
     #endif
 
     n = read();
 
     init(n);
 
-    for(int i = 1; i < n; i ++ ) 
-    {
-        
-    }
-    
-    int log2 = 0;
-    while((1 << log2) < n) log2 ++;
+    h[0] = 0;
 
-    cdq(0, 1 << log2, log2);
+    int lg2 = 0;
+    while((1 << lg2) <= n) lg2 ++;
 
-    
-    // cout << f[n] << endl;
+    for(int i = 1; i <= (1 << lg2); i ++ )
+        c[i] = g(i) * invfact[i];
+
+    cdq(0, (1 << lg2) - 1);
+
+    cout << h[n] * fact[n - 1] % mod << endl;
 
     return 0;
 }
