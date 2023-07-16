@@ -25,26 +25,27 @@ inline ll read()
     return x * f;
 }
 
-const int N = 1e6 + 10;
-int f[N];
+const int N = 3e7 + 10;
+int ans, f[N];
 char s[N], t[N];
-int n, len;
-int maxl[N];
+int n;
 
-void manacher(char *t)
+inline void manacher(char *t)
 {
-    s[0] = '@', s[1] = '$';
+    n = strlen(t + 1);
+    s[0] = '#', s[1] = '$';
     for(int i = 1; i <= n; i ++ )
         s[i << 1] = t[i], s[i << 1 | 1] = '$';
-    len = n << 1 | 1;
-    s[++ len] = '%';
+    n = n << 1 | 1;
+    s[++ n] = ')';
 
-    for(int i = 1, r = 0, mid = 0; i <= len; i ++ )
+    for(int i = 1, mid = 0, r = 0; i <= n; i ++ )
     {
-        if(!(i & 1)) f[i] = 1;
+        f[i] = 1;
         if(i <= r) f[i] = min(f[2 * mid - i], r - i + 1);
         while(s[i - f[i]] == s[i + f[i]]) f[i] ++;
-        if(i + f[i] - 1 > r) mid = i, r = i + f[i] - 1;
+        if(i + f[i] - 1 > r) r = i + f[i] - 1, mid = i;
+        ans = max(ans, f[i] - 1);
     }
 }
 
@@ -56,40 +57,10 @@ signed main()
     #endif
 
     scanf("%s", t + 1);
-    n = strlen(t + 1);
     manacher(t);
-
     // cout << s + 1 << endl;
-
-    // for(int i = 1; i < len; i ++ ) cout << f[i] << ' ';
+    // for(int i = 1; i <= n; i ++ ) cout << f[i] << ' ';
     // puts("");
-
-    memset(maxl, -0x3f, sizeof maxl);
-
-    int lpoint = len - 2;
-    for(int i = len - 2; i >= 2; i -- )
-    {
-        if(i - f[i] + 1 <= lpoint)
-        {
-            while(lpoint >= i - f[i] + 1 && lpoint != 1)
-            {
-                maxl[lpoint] = (i - lpoint) + 1;
-                lpoint --;
-            }
-        }
-    }
-
-    maxl[1] = maxl[len - 1] = -0x3f3f3f3f;
-
-    int ans = 0;
-    for(int i = 2; i < len - 1; i ++ )
-    {
-        ans = max(ans, f[i] - 1 + maxl[i + f[i]]);
-    }
-
-    // for(int i = 1; i < len; i ++ ) cout << maxl[i] << ' ';
-    // puts("");
-
     cout << ans << endl;
 
     return 0;

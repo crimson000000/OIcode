@@ -1,60 +1,64 @@
 #define LOCAL
 #include <bits/stdc++.h>
-#define int long long
-using namespace std;
-typedef long long ll;
-typedef pair<int, int> PII;
 
-inline int read()
+using namespace std;
+
+typedef long long ll;
+typedef long double ld;
+typedef pair<ll, ll> PII;
+typedef __int128 i128;
+
+inline ll read()
 {
-    int x = 0, f = 1;
+    ll x = 0, f = 1;
     char ch = getchar();
     while(ch < '0' || ch > '9')
     {
         if(ch == '-') f = -1;
         ch = getchar();
     }
-    while (ch >= '0' && ch <= '9')
+    while(ch >= '0' && ch <= '9')
     {
-        x = x * 10 + ch - '0';
+        x = (x << 3) + (x << 1) + ch - '0';
         ch = getchar();
     }
     return x * f;
 }
-const int N = 1e6 + 10;
 
-int b[N];
-char s[N << 1], t[N];
-int f[N << 1];
-int n, k, maxn, ans = 1;
+const int N = 2e6 + 10, mod = 19930726;
+int f[N];
+char s[N], t[N];
+int cnt[N];
+int n;
+ll ans;
+ll k;
 
-void manacher(int len)
+inline ll qmi(ll a, ll k, ll p)
 {
-    s[0] = '|', s[1] = '#';
-    for(int i = 1; i <= len; i ++ ) s[i << 1] = t[i], s[i << 1 | 1] = '#';
-    len = len << 1 | 1, s[len + 1] = '!';
-    int mid = 0, r = 1;
-    for(int i = 1; i <= len; i ++ )
-    {
-        if(i > r) f[i] = 1;
-        else f[i] = min(r - i, f[2 * mid - i]);
-        while(s[i - f[i]] == s[i + f[i]]) f[i] ++;
-        if(i + f[i] > r) r = i + f[i], mid = i;
-        if((f[i] - 1) % 2) b[f[i] - 1] ++;
-    }
-}
-
-const int mod = 19930726;
-int qmi(int a, int k)
-{
-    int res = 1;
+    ll res = 1;
     while(k)
     {
-        if(k & 1) res = res * a % mod;
-        a = a * a % mod;
+        if(k & 1) res = res * a % p;
+        a = a * a % p;
         k >>= 1;
     }
     return res;
+}
+
+void manacher(char *t)
+{
+    s[0] = '(', s[1] = '$';
+    for(int i = 1; i <= n; i ++ )
+        s[i << 1] = t[i], s[i << 1 | 1] = '$';
+    n = n << 1 | 1;
+    s[++ n] = ')';
+    for(int i = 1, r = 0, mid = 0; i <= n; i ++ )
+    {
+        f[i] = 1;
+        if(i <= r) f[i] = min(f[2 * mid - i], r - i + 1);
+        while(s[i - f[i]] == s[i + f[i]]) f[i] ++;
+        if(i + f[i] - 1 > r) r = i + f[i] - 1, mid = i;
+    }
 }
 
 signed main()
@@ -63,33 +67,39 @@ signed main()
         freopen("D:\\workspace\\in_and_out\\in.in", "r", stdin);
         freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
     #endif
-    n = read(), k = read();
 
+    n = read(), k = read();
     scanf("%s", t + 1);
 
-    int len = n;
-    manacher(len);
-
-    ll sum = 0;
-    for(int i = n; i > 0; i -- )
+    manacher(t);
+    for(int i = 2; i < n; i += 2) 
     {
-        if(i % 2 == 0) continue;
-        sum += b[i];
-        if(k >= sum) 
+        cnt[f[i] - 1] ++;
+        // cout << f[i] - 1 << ' ';
+    }
+
+    ans = 1;
+    for(int i = n; i >= 0; i -- )
+    {
+        if(cnt[i])
         {
-            ans = (ll)(ans * qmi(i, sum)) % mod;
-            k -= sum;
-        }
-        else
-        {
-            ans = (ll)(ans * qmi(i, k)) % mod;
-            k -= sum;
-            break;
+            if(k > cnt[i])
+            {
+                ans = ans * qmi(i, cnt[i], mod) % mod;
+                k -= cnt[i];
+                if(i >= 2) cnt[i - 2] += cnt[i];
+            }
+            else
+            {
+                ans = ans * qmi(i, k, mod) % mod;
+                k = 0;
+                break;
+            }
         }
     }
 
-    if(k > 0) ans = -1;
-    cout << ans << endl;
-    
+    if(k) puts("-1");
+    else cout << ans << endl;
+
     return 0;
 }

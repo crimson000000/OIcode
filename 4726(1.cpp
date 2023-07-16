@@ -1,6 +1,8 @@
 #define LOCAL
 #include <bits/stdc++.h>
+
 using namespace std;
+
 typedef long long ll;
 typedef pair<int, int> PII;
 
@@ -13,16 +15,17 @@ inline ll read()
         if(ch == '-') f = -1;
         ch = getchar();
     }
-    while (ch >= '0' && ch <= '9')
+    while(ch >= '0' && ch <= '9')
     {
-        x = x * 10 + ch - '0';
+        x = (x << 3) + (x << 1) + ch - '0';
         ch = getchar();
     }
     return x * f;
 }
 
 const int N = 1e6 + 10, mod = 998244353;
-ll F[N], G[N], H[N];
+ll F[N], G[N];
+ll a[N], b[N];
 int rev[N];
 int n;
 int lim, len;
@@ -39,7 +42,7 @@ inline ll qmi(ll a, ll k, ll p)
     return res;
 }
 
-inline void calcrev()
+inline void calc()
 {
     for(int i = 0; i < lim; i ++ )
         rev[i] = (rev[i >> 1] >> 1) | ((i & 1) << (len - 1));
@@ -75,30 +78,39 @@ inline void NTT(ll a[], int opt)
     }
 }
 
-inline void inv(ll a[], ll b[], int n)
+void cdq(int l, int r)
 {
-    if(n == 1)
+    if(l == r - 1)
     {
-        b[0] = qmi(a[0], mod - 2, mod);
+        if(l) F[l] = F[l] * qmi(l, mod - 2, mod) % mod;
+        else F[l] = 1;
+        // cout << F[l] << endl;
         return;
     }
-    inv(a, b, (n + 1) >> 1);
+    int mid = l + r >> 1;
+    cdq(l, mid);
+
     lim = 1, len = 0;
-    while(lim <= n * 2) lim <<= 1, len ++;
-    calcrev();
-    for(int i = 0; i < lim; i ++ )
-    {
-        if(i < n) H[i] = a[i];
-        else H[i] = 0;
-    }
-    NTT(H, 1), NTT(b, 1);
-    for(int i = 0; i < lim; i ++ )
-        b[i] = (2 * b[i] % mod - H[i] * b[i] % mod * b[i] % mod + mod) % mod;
-    NTT(b, -1);
-    for(int i = n; i < lim; i ++ ) b[i] = 0;
+    while(lim <= (r - l)) lim <<= 1, len ++;
+    // cout << lim << ' ' << len << endl;
+
+    for(int i = 0; i < mid - l; i ++ ) a[i] = F[i + l];
+    for(int i = mid - l; i < lim; i ++ ) a[i] = 0;
+    for(int i = 0; i < r - l - 1; i ++ ) b[i] = G[i];
+    for(int i = r - l - 1; i < lim; i ++ ) b[i] = 0;
+
+    calc();
+    NTT(a, 1), NTT(b, 1);
+    for(int i = 0; i < lim; i ++ ) a[i] = a[i] * b[i] % mod;
+    NTT(a, -1);
+
+    for(int i = mid - l - 1; i < r - l - 1; i ++ ) 
+        F[i + l + 1] = (F[i + l + 1] + a[i]) % mod;
+
+    cdq(mid, r);
 }
 
-int main()
+signed main()
 {
     #ifdef LOCAL
         freopen("D:\\workspace\\in_and_out\\in.in", "r", stdin);
@@ -106,12 +118,18 @@ int main()
     #endif
 
     n = read();
+    for(int i = 0; i < n; i ++ ) G[i] = read();
 
-    for(int i = 0; i < n; i ++ ) F[i] = read();
+    for(int i = 1; i < n; i ++ ) G[i - 1] = G[i] * i % mod;
+    G[n - 1] = 0;
 
-    inv(F, G, n);
+    // for(int i = 0; i < n; i ++ ) cout << G[i] << ' ';
+    // puts("");
+    
+    cdq(0, n);
 
-    for(int i = 0; i < n; i ++ ) printf("%lld ", (G[i] % mod + mod) % mod);
+    for(int i = 0; i < n; i ++ ) printf("%lld ", F[i]);
 
     return 0;
 }
+

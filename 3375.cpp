@@ -4,7 +4,8 @@
 using namespace std;
 
 typedef long long ll;
-typedef pair<int, int> PII;
+typedef long double ld;
+typedef pair<ll, ll> PII;
 
 inline ll read()
 {
@@ -24,36 +25,39 @@ inline ll read()
 }
 
 const int N = 1e7 + 10;
-int a[N];
-int stk[N], tt;
-int ch[N][2];
-int n;
+int ne[N];
+char s[N], t[N];
+int n, m;
 
-int main()
+signed main()
 {
     #ifdef LOCAL
         freopen("D:\\workspace\\in_and_out\\in.in", "r", stdin);
         freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
     #endif
 
-    n = read();
-    for(int i = 1; i <= n; i ++ ) a[i] = read();
+    scanf("%s%s", s + 1, t + 1);
+    n = strlen(s + 1), m = strlen(t + 1);
 
-    for(int i = 1; i <= n; i ++ )
+    ne[1] = 0;
+    for(int i = 2, j = 0; i <= m; i ++ )
     {
-        while(tt > 0 && a[stk[tt]] > a[i]) ch[i][0] = stk[tt -- ];
-        if(tt) ch[stk[tt]][1] = i;
-        stk[++ tt] = i;
+        while(j && t[i] != t[j + 1]) j = ne[j];
+        if(t[i] == t[j + 1]) j ++;
+        ne[i] = j;
     }
 
-    ll L = 0, R = 0;
-    for(int i = 1; i <= n; i ++ )
+    for(int i = 1, j = 0; i <= n; i ++ )
     {
-        L ^= (ll)i * (ch[i][0] + 1);
-        R ^= (ll)i * (ch[i][1] + 1);
+        while(j && s[i] != t[j + 1]) j = ne[j];
+        if(s[i] == t[j + 1]) j ++;
+        if(j == m)
+        {
+            printf("%d\n", i - m + 1);
+        }
     }
 
-    cout << L << ' ' << R << endl;
+    for(int i = 1; i <= m; i ++ ) printf("%d ", ne[i]);
 
     return 0;
 }

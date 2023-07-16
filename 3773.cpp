@@ -4,7 +4,7 @@
 using namespace std;
 
 typedef long long ll;
-typedef pair<int, int> PII;
+typedef pair<long long, long long> PII;
 
 inline ll read()
 {
@@ -23,11 +23,10 @@ inline ll read()
     return x * f;
 }
 
-const int N = 1e7 + 10;
-int a[N];
-int stk[N], tt;
-int ch[N][2];
+const int N = 1e6 + 10, mod = 1e9 + 7, M = 3010;
+ll a[N], f[N], t[N];
 int n;
+ll ans;
 
 int main()
 {
@@ -37,23 +36,19 @@ int main()
     #endif
 
     n = read();
-    for(int i = 1; i <= n; i ++ ) a[i] = read();
+    for(int i = 1; i <= n; i ++ ) a[i] = read(), t[a[i]] = i;
 
-    for(int i = 1; i <= n; i ++ )
+    for(int i = n; i; i -- )
     {
-        while(tt > 0 && a[stk[tt]] > a[i]) ch[i][0] = stk[tt -- ];
-        if(tt) ch[stk[tt]][1] = i;
-        stk[++ tt] = i;
+        f[i] = 1;
+        for(int j = a[i] & (a[i] - 1); j; j = (j - 1) & a[i])
+            f[i] = (f[i] + f[t[j]]) % mod;
+        ans = (ans + f[i]) % mod;
     }
 
-    ll L = 0, R = 0;
-    for(int i = 1; i <= n; i ++ )
-    {
-        L ^= (ll)i * (ch[i][0] + 1);
-        R ^= (ll)i * (ch[i][1] + 1);
-    }
+    ans = (ans - n + mod) % mod;
 
-    cout << L << ' ' << R << endl;
+    cout << ans << endl;
 
     return 0;
 }

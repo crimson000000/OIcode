@@ -4,7 +4,7 @@
 using namespace std;
 
 typedef long long ll;
-typedef pair<int, int> PII;
+typedef pair<long long, long long> PII;
 
 inline ll read()
 {
@@ -23,11 +23,13 @@ inline ll read()
     return x * f;
 }
 
-const int N = 1e7 + 10;
-int a[N];
-int stk[N], tt;
-int ch[N][2];
+const int N = 1e6 + 10;
+ll a[N], b[N];
+priority_queue<PII> heap;
+bool vis[N];
+ll now;
 int n;
+ll ans;
 
 int main()
 {
@@ -38,22 +40,33 @@ int main()
 
     n = read();
     for(int i = 1; i <= n; i ++ ) a[i] = read();
-
+    for(int i = 1; i <= n; i ++ ) b[i] = read();
+    
     for(int i = 1; i <= n; i ++ )
     {
-        while(tt > 0 && a[stk[tt]] > a[i]) ch[i][0] = stk[tt -- ];
-        if(tt) ch[stk[tt]][1] = i;
-        stk[++ tt] = i;
+        now += a[i];
+        if(now < b[i] && !heap.empty() && b[i] < heap.top().first)
+        {
+            vis[heap.top().second] = false;
+            now += heap.top().first;
+            ans --;
+            heap.pop();
+        }
+        if(now >= b[i])
+        {
+            vis[i] = true;
+            now -= b[i];
+            heap.emplace(b[i], i);
+            ans ++;
+        }
     }
 
-    ll L = 0, R = 0;
+    cout << ans << endl;
     for(int i = 1; i <= n; i ++ )
-    {
-        L ^= (ll)i * (ch[i][0] + 1);
-        R ^= (ll)i * (ch[i][1] + 1);
-    }
+        if(vis[i])
+            cout << i << ' ';
 
-    cout << L << ' ' << R << endl;
+    
 
     return 0;
 }
