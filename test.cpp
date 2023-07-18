@@ -1,290 +1,198 @@
-// luogu-judger-enable-o2
-#include <cstdio>
-#include <algorithm>
+// Problem: E - Random LIS
+// Contest: AtCoder - AtCoder Regular Contest 104
+// URL: https://atcoder.jp/contests/arc104/tasks/arc104_e
+// Memory Limit: 1024 MB
+// Time Limit: 2000 ms
+//
+// Powered by CP Editor (https://cpeditor.org)
+
+#include <bits/stdc++.h>
+#define pb emplace_back
+#define fst first
+#define scd second
+#define mems(a, x) memset((a), (x), sizeof(a))
+
 using namespace std;
-const int N = 3 * 1e4 + 10;
-const int M = 130;
-typedef unsigned int uit;
-const uit mod = 10007;
-int n;
-int m;
-int q;
-uit iv[mod + 10];
-uit ans[M];
-char opt[20];
-int rot;
-inline void fwt(uit *a, const uit &o) // fwt
+typedef long long ll;
+typedef unsigned long long ull;
+typedef long double ldb;
+typedef pair<ll, ll> pii;
+
+const int maxn = 12;
+const ll mod = 1000000007;
+
+inline ll qpow(ll b, ll p)
 {
-    for (int k = 1; k < m; k <<= 1)
-        for (int s = 0; s < m; s += (k << 1))
-            for (int i = s; i < s + k; i++)
+    ll res = 1;
+    while (p)
+    {
+        if (p & 1)
+        {
+            res = res * b % mod;
+        }
+        b = b * b % mod;
+        p >>= 1;
+    }
+    return res;
+}
+
+ll n, fac[maxn], ifac[maxn], a[maxn], b[maxn], c[maxn], g[maxn], ans;
+ll h[maxn], lsh[maxn], f[maxn][maxn];
+
+inline ll C(ll n, ll m)
+{
+    if (n < m || n < 0 || m < 0)
+    {
+        return 0;
+    }
+    else
+    {
+        ll ans = ifac[m];
+        for (int i = 0; i < m; ++i)
+        {
+            ans = ans * (n - i) % mod;
+        }
+        return ans;
+    }
+}
+
+inline ll work()
+{
+    mems(h, 0x3f);
+    ll m = 0;
+    for (int i = 1; i <= n; ++i)
+    {
+        h[b[i]] = min(h[b[i]], a[i]);
+        m = max(m, b[i]);
+    }
+    int tot = 0;
+    for (int i = 1; i <= m; ++i)
+    {
+        lsh[++tot] = h[i];
+    }
+    lsh[++tot] = 0;
+    sort(lsh + 1, lsh + tot + 1);
+    tot = unique(lsh + 1, lsh + tot + 1) - lsh - 1;
+    for (int i = 1; i <= m; ++i)
+    {
+        h[i] = lower_bound(lsh + 1, lsh + tot + 1, h[i]) - lsh;
+    }
+    mems(f, 0);
+    f[0][1] = 1;
+    for (int i = 1; i <= m; ++i)
+    {
+        for (int j = 2; j <= h[i]; ++j)
+        {
+            // printf("%d %d\n", i, j);
+            ll mn = h[i];
+            for (int k = i; k; --k)
             {
-                uit a0 = a[i];
-                uit a1 = a[i + k];
-                a[i] = (a0 + a1) * o % mod;
-                a[i + k] = (a0 + mod - a1) * o % mod;
-            }
-}
-struct poly // 多项式类
-{
-    uit f[M];
-    inline uit &operator[](const int &x) { return f[x]; }
-    friend poly operator*(poly a, poly b)
-    {
-        poly c;
-        for (int i = 0; i < m; i++)
-            c[i] = a[i] * b[i] % mod;
-        return c;
-    }
-    friend poly operator/(poly a, poly b)
-    {
-        poly c;
-        for (int i = 0; i < m; i++)
-            c[i] = a[i] * iv[b[i]] % mod;
-        return c;
-    }
-    friend poly operator+(poly a, poly b)
-    {
-        poly c;
-        for (int i = 0; i < m; i++)
-            c[i] = (a[i] + b[i]) % mod;
-        return c;
-    }
-    friend poly operator-(poly a, poly b)
-    {
-        poly c;
-        for (int i = 0; i < m; i++)
-            c[i] = (a[i] + mod - b[i]) % mod;
-        return c;
-    }
-    void operator+=(const poly &b)
-    {
-        for (int i = 0; i < m; i++)
-            f[i] = (f[i] + b.f[i]) % mod;
-    }
-    void operator-=(const poly &b)
-    {
-        for (int i = 0; i < m; i++)
-            f[i] = (f[i] + mod - b.f[i]) % mod;
-    }
-    inline void setone()
-    {
-        for (int i = 0; i < m; i++)
-            f[i] = 1;
-    }
-} we[N], one;
-struct mar // 矩阵类
-{
-    poly mp[2][2];
-    inline poly *operator[](const int &x) { return mp[x]; }
-    friend mar operator*(mar a, mar b)
-    {
-        mar c;
-        c[0][0] = a[0][0] * b[0][0];
-        c[0][1] = a[0][0] * b[0][1] + a[0][1];
-        c[1][0] = a[1][0] * b[0][0] + b[1][0];
-        c[1][1] = a[1][0] * b[0][1] + a[1][1] + b[1][1];
-        return c;
-    }
-};
-int v[2 * N];
-int x[2 * N];
-int ct;
-int al[N];
-int siz[N];
-int h[N];
-inline void add(int u, int V)
-{
-    v[++ct] = V;
-    x[ct] = al[u];
-    al[u] = ct;
-}
-inline int dfs(int u) // 轻重链剖分
-{
-    siz[u] = 1;
-    for (int i = al[u]; i; i = x[i])
-        if (siz[v[i]] == 0)
-        {
-            siz[u] += dfs(v[i]);
-            if (siz[h[u]] < siz[v[i]])
-                h[u] = v[i];
-        }
-    return siz[u];
-}
-struct data // 用来维护轻边的结构体
-{
-    int fz[M];
-    uit fv[M];
-    inline void wt(const int &i, const int &x)
-    {
-        if (x == 0)
-            fz[i] = fv[i] = 1;
-        else
-            fz[i] = 0, fv[i] = x;
-    }
-    void operator*=(const poly &b)
-    {
-        for (int i = 0; i < m; i++)
-            fz[i] += (b.f[i] == 0);
-        for (int i = 0; i < m; i++)
-            fv[i] = fv[i] * (b.f[i] ? b.f[i] : 1) % mod;
-    }
-    void operator/=(const poly &b)
-    {
-        for (int i = 0; i < m; i++)
-            fz[i] -= (b.f[i] == 0);
-        for (int i = 0; i < m; i++)
-            fv[i] = fv[i] * iv[b.f[i]] % mod;
-    }
-};
-inline void cpy(poly &a, const data &b)
-{
-    for (int i = 0; i < m; i++)
-        a[i] = b.fz[i] ? 0 : b.fv[i];
-}
-struct global_balanced_tree // 全局平衡二叉树
-{
-    int s[N][2];
-    int fa[N];
-    int lsiz[N];
-    int st[N];
-    int tp;
-    mar w[N];
-    mar mul[N];
-    data lt[N];
-    poly lh[N];
-    inline void udw(const int &p)
-    {
-        cpy(w[p][0][0], lt[p]);
-        w[p][1][1] = w[p][1][0] = w[p][0][1] = w[p][0][0];
-        w[p][1][1] += lh[p];
-    }
-    inline void ud(const int &p) { mul[p] = mul[s[p][0]] * w[p] * mul[s[p][1]]; }
-    inline void ins(const int &u, const int &v)
-    {
-        lt[u] *= (mul[v][1][0] + one);
-        lh[u] += mul[v][1][1];
-    }
-    inline void del(const int &u, const int &v)
-    {
-        lt[u] /= (mul[v][1][0] + one);
-        lh[u] -= mul[v][1][1];
-    }
-    inline bool isr(const int &u) { return (s[fa[u]][0] != u) && (s[fa[u]][1] != u); }
-    inline int subbuild(int l, int r) // 一条重链递归建树
-    {
-        if (l == r)
-        {
-            ud(st[l]);
-            return st[l];
-        }
-        if (l > r)
-        {
-            return 0;
-        }
-        int tot = 0;
-        for (int i = l; i <= r; i++)
-            tot += lsiz[st[i]];
-        for (int i = l, nsiz = lsiz[st[i]]; i <= r; i++, nsiz += lsiz[st[i]])
-            if (2 * nsiz >= tot)
-            {
-                s[st[i]][0] = subbuild(l, i - 1);
-                s[st[i]][1] = subbuild(i + 1, r);
-                fa[s[st[i]][0]] = st[i];
-                fa[s[st[i]][1]] = st[i];
-                ud(st[i]);
-                return st[i];
-            }
-    }
-    inline int build(int p) // 链分治
-    {
-        for (int i = p; i; i = h[i])
-            lsiz[i] = siz[i] - siz[h[i]];
-        for (int i = p; i; i = h[i])
-            for (int j = al[i]; j; j = x[j])
-                if (lsiz[v[j]] == 0)
+                mn = min(mn, h[k]);
+                if (j > mn)
                 {
-                    int ls = build(v[j]);
-                    fa[ls] = i;
-                    ins(i, ls);
+                    break;
                 }
-        for (int i = p; i; i = h[i])
-            udw(i);
-        tp = 0;
-        for (int i = p; i; i = h[i])
-            st[++tp] = i;
-        reverse(st + 1, st + tp + 1);
-        return subbuild(1, tp);
-    }
-    inline void modify(int u, const int &w1) // 修改，每次跳一条轻边
-    {
-        lt[u] /= we[u];
-        for (int i = 0; i < m; i++)
-            we[u][i] = 0;
-        we[u][w1] = 1;
-        fwt(we[u].f, 1);
-        lt[u] *= we[u];
-        udw(u);
-        for (int p = u; p; p = fa[p])
-            if (isr(p) && fa[p])
-            {
-                del(fa[p], p);
-                ud(p);
-                ins(fa[p], p);
-                udw(fa[p]);
+                for (int x = 1; x < j; ++x)
+                {
+                    if (!f[k - 1][x])
+                    {
+                        continue;
+                    }
+                    f[i][j] = (f[i][j] + C(lsh[j] - lsh[j - 1], i - k + 1) * f[k - 1][x] % mod) % mod;
+                }
             }
-            else
-                ud(p);
-        for (int i = 0; i < m; i++)
-            ans[i] = mul[rot][1][1][i];
-        fwt(ans, 5004);
+        }
     }
-    inline void ih() // 初始化
+    ll ans = 0;
+    for (int i = 2; i <= tot; ++i)
     {
-        for (int i = 1; i <= n; i++)
-            for (int j = 0; j < m; j++)
-                lt[i].wt(j, we[i][j]);
-        w[0][0][0].setone();
-        mul[0][0][0].setone();
+        ans = (ans + f[m][i]) % mod;
     }
-} gbt;
+    // if (ans) {
+    // printf("b: ");
+    // for (int i = 1; i <= n; ++i) {
+    // printf("%lld ", b[i]);
+    // }
+    // putchar('\n');
+    // printf("h: ");
+    // for (int i = 1; i <= m; ++i) {
+    // printf("%lld ", h[i]);
+    // }
+    // putchar('\n');
+    // printf("%lld\n", ans);
+    // }
+    return ans;
+}
+
+void dfs(int d)
+{
+    if (d > n)
+    {
+        for (int i = 1; i <= n; ++i)
+        {
+            c[i] = b[i];
+        }
+        sort(c + 1, c + n + 1);
+        for (int i = 1; i <= n; ++i)
+        {
+            if (c[i] - c[i - 1] > 1)
+            {
+                return;
+            }
+        }
+        ll mx = 0;
+        for (int i = 1; i <= n; ++i)
+        {
+            g[i] = 1;
+            for (int j = 1; j < i; ++j)
+            {
+                if (b[j] < b[i])
+                {
+                    g[i] = max(g[i], g[j] + 1);
+                }
+            }
+            mx = max(mx, g[i]);
+        }
+        ans = (ans + mx * work() % mod) % mod;
+        return;
+    }
+    for (int i = 1; i <= n; ++i)
+    {
+        b[d] = i;
+        dfs(d + 1);
+    }
+}
+
+void solve()
+{
+    scanf("%lld", &n);
+    fac[0] = 1;
+    for (int i = 1; i <= n; ++i)
+    {
+        scanf("%lld", &a[i]);
+        fac[i] = fac[i - 1] * i % mod;
+    }
+    ifac[n] = qpow(fac[n], mod - 2);
+    for (int i = n - 1; ~i; --i)
+    {
+        ifac[i] = ifac[i + 1] * (i + 1) % mod;
+    }
+    dfs(1);
+    // printf("ans: %lld\n", ans);
+    for (int i = 1; i <= n; ++i)
+    {
+        ans = ans * qpow(a[i], mod - 2) % mod;
+    }
+    printf("%lld\n", ans);
+}
+
 int main()
 {
-    iv[0] = 1;
-    iv[1] = 1;
-    for (int i = 2; i < mod; i++)
-        iv[i] = (mod - mod / i) * iv[mod % i] % mod;
-    scanf("%d%d", &n, &m);
-    one.setone();
-    for (int i = 1, w; i <= n; i++)
+    int T = 1;
+    // scanf("%d", &T);
+    while (T--)
     {
-        scanf("%d", &w), we[i][w] = 1, fwt(we[i].f, 1);
+        solve();
     }
-    for (int i = 1, u, v; i < n; i++)
-        scanf("%d%d", &u, &v), add(u, v), add(v, u);
-    dfs(1);
-    gbt.ih();
-    rot = gbt.build(1);
-    for (int i = 0; i < m; i++)
-        ans[i] = gbt.mul[rot][1][1][i];
-    fwt(ans, 5004);
-    scanf("%d", &q);
-    for (int i = 1; i <= q; i++)
-    {
-        scanf("%s", opt);
-        if (opt[0] == 'Q')
-        {
-            int t;
-            scanf("%d", &t);
-            printf("%d\n", ans[t]);
-        }
-        else
-        {
-            int w;
-            int u;
-            scanf("%d%d", &u, &w);
-            gbt.modify(u, w);
-        }
-    }
-    return 0; // 拜拜程序~
+    return 0;
 }

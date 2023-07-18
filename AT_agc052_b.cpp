@@ -29,7 +29,6 @@ int h[N], e[N], ne[N], w[N], idx;
 // Tree 2
 vector<PII> G[N];
 unordered_map<int, int> cnt;
-
 int n;
 
 inline void add(int a, int b, int c)
