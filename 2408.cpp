@@ -23,33 +23,24 @@ inline ll read()
     return x * f;
 }
 
-const int N = 2e6 + 10;
-int sa[N], rk[N], oldrk[N];
-int cnt[N], id[N];
-int n, m, w, p;
+const int N = 1e6 + 10;
+int sa[N], rk[N], oldrk[N], id[N], cnt[N], height[N];
 char s[N];
+int n, m, p, w;
 
-int main()
+inline void build(char *s)
 {
-    #ifdef LOCAL
-        freopen("D:\\workspace\\in_and_out\\in.in", "r", stdin);
-        freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
-    #endif
-
-    scanf("%s", s + 1);
-    n = strlen(s + 1);
-
     m = 127;
     for(int i = 1; i <= n; i ++ ) rk[i] = s[i];
     for(int i = 1; i <= n; i ++ ) cnt[rk[i]] ++;
     for(int i = 1; i <= m; i ++ ) cnt[i] += cnt[i - 1];
     for(int i = n; i > 0; i -- ) sa[cnt[rk[i]] -- ] = i;
-    memcpy(oldrk + 1, rk + 1, n * sizeof(int));
+    swap(rk, oldrk);
     for(int i = 1; i <= n; i ++ )
     {
-        if(oldrk[sa[i]] != oldrk[sa[i - 1]])
-            rk[sa[i]] = ++ p;
-        else rk[sa[i]] = p;
+        if(oldrk[sa[i]] == oldrk[sa[i - 1]])
+            rk[sa[i]] = p;
+        else rk[sa[i]] = ++ p;
     }
 
     for(w = 1; w < n; w <<= 1)
@@ -60,23 +51,46 @@ int main()
         for(int i = 1; i <= n; i ++ )
             if(sa[i] > w)
                 id[++ p] = sa[i] - w;
-
+        
         memset(cnt, 0, sizeof cnt);
         for(int i = 1; i <= n; i ++ ) cnt[rk[id[i]]] ++;
         for(int i = 1; i <= m; i ++ ) cnt[i] += cnt[i - 1];
-        for(int i = n; i >= 1; i -- ) sa[cnt[rk[id[i]]] -- ] = id[i];
-
-        memcpy(oldrk + 1, rk + 1, n * sizeof(int));
+        for(int i = n; i > 0; i -- ) sa[cnt[rk[id[i]]] -- ] = id[i];
+        swap(rk, oldrk);
         p = 0;
         for(int i = 1; i <= n; i ++ )
         {
-            if(oldrk[sa[i]] != oldrk[sa[i - 1]] || oldrk[sa[i] + w] != oldrk[sa[i - 1] + w])
-                rk[sa[i]] = ++ p;
-            else rk[sa[i]] = p;
+            if(oldrk[sa[i]] == oldrk[sa[i - 1]] && oldrk[sa[i] + w] == oldrk[sa[i - 1] + w])
+                rk[sa[i]] = p;
+            else rk[sa[i]] = ++ p;
         }
     }
 
-    for(int i = 1; i <= n; i ++ ) printf("%d ", sa[i]);
+    for(int i = 1, j = 0; i <= n; i ++ )
+    {
+        if(j) j --;
+        while(s[i + j] == s[sa[rk[i] - 1] + j]) j ++;
+        height[rk[i]] = j;
+    }
+}
+
+int main()
+{
+    #ifdef LOCAL
+        freopen("D:\\workspace\\in_and_out\\in.in", "r", stdin);
+        freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
+    #endif
+
+    n = read();
+    scanf("%s", s + 1);
+
+    build(s);
+
+    ll ans = (ll)(n + 1) * n / 2;
+    for(int i = 2; i <= n; i ++ )
+        ans -= height[i];
+
+    cout << ans << endl;
 
     return 0;
 }

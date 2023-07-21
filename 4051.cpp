@@ -23,16 +23,10 @@ inline ll read()
     return x * f;
 }
 
-const int N = 1e6 + 10;
+const int N = 2e6 + 10;
 char s[N];
-int sa[N], rk[N], id[N], oldrk[N], cnt[N], px[N];
-int w, i, p;
-int n, m, t;
-
-bool cmp(int x, int y, int w)
-{
-    return oldrk[x] == oldrk[y] && oldrk[x + w] == oldrk[y + w];
-}
+int rk[N], sa[N], cnt[N], oldrk[N], id[N];
+int w, n, m, p, t;
 
 int main()
 {
@@ -44,36 +38,42 @@ int main()
     scanf("%s", s + 1);
     n = strlen(s + 1);
     t = n;
-
     for(int i = n + 1; i <= 2 * n; i ++ ) s[i] = s[i - n];
-    n = n << 1;
+    n <<= 1;
 
     m = 128;
-    for(int i = 1; i <= n; i ++ ) rk[i] = s[i], cnt[rk[i]] ++;
+    for(int i = 1; i <= n; i ++ ) rk[i] = s[i];
+    for(int i = 1; i <= n; i ++ ) cnt[rk[i]] ++;
     for(int i = 1; i <= m; i ++ ) cnt[i] += cnt[i - 1];
-    for(int i = n; i; i -- ) sa[cnt[rk[i]] -- ] = i;
+    for(int i = n; i > 0; i -- ) sa[cnt[rk[i]] -- ] = i;
     memcpy(oldrk + 1, rk + 1, n * sizeof(int));
-    for(p = 0, i = 1; i <= n; i ++ )
+    for(int i = 1; i <= n; i ++ ) 
     {
-        rk[sa[i]] = cmp(sa[i], sa[i - 1], 0) ? p : ++ p;
+        if(oldrk[sa[i]] != oldrk[sa[i - 1]])
+            rk[sa[i]] = ++ p;
+        else rk[sa[i]] = p;
     }
 
     for(w = 1; w < n; w <<= 1)
     {
         m = p;
-        for(p = 0, i = n; i > n - w; i -- ) id[++ p] = i;
+        p = 0;
+        for(int i = n; i > n - w; i -- ) id[++ p] = i;
         for(int i = 1; i <= n; i ++ )
             if(sa[i] > w)
                 id[++ p] = sa[i] - w;
-
+        
         memset(cnt, 0, sizeof cnt);
-        for(int i = 1; i <= n; i ++ ) px[i] = rk[id[i]], cnt[px[i]] ++;
+        for(int i = 1; i <= n; i ++ ) cnt[rk[id[i]]] ++;
         for(int i = 1; i <= m; i ++ ) cnt[i] += cnt[i - 1];
-        for(int i = n; i; i -- ) sa[cnt[px[i]] -- ] = id[i];
-
+        for(int i = n; i >= 1; i -- ) sa[cnt[rk[id[i]]] -- ] = id[i];
         memcpy(oldrk + 1, rk + 1, n * sizeof(int));
-        for(p = 0, i = 1; i <= n; i ++ )
-            rk[sa[i]] = cmp(sa[i], sa[i - 1], w) ? p : ++ p;
+        for(int i = 1; i <= n; i ++ )
+        {
+            if(oldrk[sa[i]] == oldrk[sa[i - 1]] && oldrk[sa[i] + w] == oldrk[sa[i - 1] + w])
+                rk[sa[i]] = p;
+            else rk[sa[i]] = ++ p;
+        } 
     }
 
     for(int i = 1; i <= n; i ++ )
