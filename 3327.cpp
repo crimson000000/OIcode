@@ -22,49 +22,54 @@ inline ll read()
 }
 
 const int N = 1e6 + 10;
-int miu[N];
-ll a, b, c, d, k;
 int primes[N], cnt;
 bitset<N> st;
+ll d[N], s[N];
+ll miu[N];
+int n, m;
 
 inline void init(int n)
 {
+    d[1] = 1;
     miu[1] = 1;
     for(int i = 2; i <= n; i ++ )
     {
         if(!st[i])
         {
             primes[++ cnt] = i;
+            d[i] = 2;
             miu[i] = -1;
         }
         for(int j = 1; j <= cnt && primes[j] <= n / i; j ++ )
         {
             int t = primes[j] * i;
             st[t] = true;
-            miu[t] = -miu[i];
-            if(i % primes[j] == 0) 
+            if(i % primes[j] == 0)
             {
+                d[t] = 2 * d[i] - d[i / primes[j]];
                 miu[t] = 0;
                 break;
-            } 
+            }
+            d[t] = d[i] * d[primes[j]];
+            miu[t] = -miu[i];
         }
     }
+    for(int i = 1; i <= n; i ++ ) s[i] = s[i - 1] + d[i];
     for(int i = 1; i <= n; i ++ ) miu[i] += miu[i - 1];
 }
 
-inline ll getr(ll a, ll x)
+inline ll getr(ll n, ll l)
 {
-    return a / (a / x);
+    return n / (n / l);
 }
 
-inline ll solve(int n, int m, int k)
+inline ll solve(ll n, ll m)
 {
-    n /= k, m /= k;
     ll ans = 0;
-    for(int l = 1, r = 0; l <= min(n, m); l = r + 1)
+    for(int l = 1, r; l <= min(n, m); l = r + 1)
     {
         r = min(getr(n, l), getr(m, l));
-        ans = ans + (miu[r] - miu[l - 1]) * (ll)(n / l) * (m / l);
+        ans += (miu[r] - miu[l - 1]) * s[n / l] * s[m / l];
     }
     return ans;
 }
@@ -81,8 +86,8 @@ signed main()
 
     while(T -- )
     {
-        a = read(), b = read(), c = read(), d = read(), k = read();
-        printf("%lld\n", solve(b, d, k) - solve(a - 1, d, k) - solve(b, c - 1, k) + solve(a - 1, c - 1, k));
+        n = read(), m = read();
+        printf("%lld\n", solve(n, m));
     }
 
     return 0;
