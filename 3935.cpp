@@ -21,6 +21,25 @@ inline ll read()
     return x * f;
 }
 
+const int N = 1e6 + 10, mod = 998244353;
+ll n, m;
+
+inline ll getr(ll n, ll l)
+{
+    return n / (n / l);
+}
+
+inline ll solve(ll n)
+{
+    ll res = 0;
+    for(ll l = 1, r; l <= n; l = r + 1)
+    {
+        r = getr(n, l);
+        res = (res + (r - l + 1) * (n / l) % mod) % mod;
+    }
+    return res;
+}
+
 signed main()
 {
     #ifdef LOCAL
@@ -28,9 +47,9 @@ signed main()
         freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
     #endif
 
-    int 🌸, 😓;
-    cin >> 🌸 >> 😓;
-    cout << 🌸 + 😓 << endl;
-    
+    n = read(), m = read();
+
+    printf("%lld\n", (solve(m) - solve(n - 1) + mod) % mod);
+
     return 0;
 }

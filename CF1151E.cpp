@@ -21,6 +21,11 @@ inline ll read()
     return x * f;
 }
 
+const int N = 1e6 + 10;
+int n;
+ll a[N];
+ll ans;
+
 signed main()
 {
     #ifdef LOCAL
@@ -28,9 +33,16 @@ signed main()
         freopen("D:\\workspace\\in_and_out\\out.out", "w", stdout);
     #endif
 
-    int 🌸, 😓;
-    cin >> 🌸 >> 😓;
-    cout << 🌸 + 😓 << endl;
-    
+    n = read();
+    for(int i = 1; i <= n; i ++ ) a[i] = read();
+
+    for(int i = 1; i <= n; i ++ )
+        ans += a[i] * (n - a[i] + 1);
+
+    for(int i = 1; i < n; i ++ )
+        ans -= min(a[i], a[i + 1]) * (n - max(a[i], a[i + 1]) + 1);
+
+    cout << ans << endl;
+
     return 0;
 }
